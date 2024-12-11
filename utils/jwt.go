@@ -1,9 +1,9 @@
 package utils
 
 import (
-	"errors"
 	"log"
 	"microservices/models"
+	"net/http"
 	"os"
 	"time"
 
@@ -54,7 +54,7 @@ func VerifyToken(tokenString string) error {
 	}
 
 	if !token.Valid {
-		return errors.New("invalid token")
+		return http.ErrAbortHandler
 	}
 
 	return nil
