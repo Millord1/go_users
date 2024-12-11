@@ -7,16 +7,36 @@ import (
 	"microservices/utils"
 )
 
-type UserService struct {
-	repo repository.UserRepository
+func CreateNewUser(repo repository.UserRepository, user *models.User) (*models.User, error) {
+
+	userToPush, hashErr := user.CheckPasswordIsHashed()
+	if hashErr != nil {
+		return user, hashErr
+	}
+	return repo.Save(*userToPush)
 }
 
-func NewUserService() *UserService {
-	return &UserService{repo: repository.DbConnect(utils.GetEnvFile().Name)}
+func UpdateUser(repo repository.UserRepository, user *models.User) (*models.User, error) {
+	toUpdate := models.User{
+		Username: user.Username,
+		Email:    user.Email,
+	}
+
+	return repo.Update(&toUpdate)
 }
 
-func (s *UserService) LoginUser(email string, pw string) (string, error) {
-	user, err := s.repo.GetUserByMail(email)
+/* func UpdatePassword(repo repository.UserRepository, user *models.User, oldPw string) (*models.User, error) {
+	if !user.VerifyPassword(oldPw) {
+		err := errors.New("wrong password")
+		log.Fatalln(err)
+		return user, err
+	}
+
+	return repo.Update(user)
+} */
+
+func LoginUser(repo repository.UserRepository, email string, pw string) (string, error) {
+	user, err := repo.FindByMail(email)
 	if err != nil {
 		return "", err
 	}
@@ -28,10 +48,6 @@ func (s *UserService) LoginUser(email string, pw string) (string, error) {
 	return utils.CreateToken(user)
 }
 
-func (s *UserService) GetUserNames() (*[]models.User, error) {
-	return s.repo.GetAllUserNames()
-}
-
-func (s *UserService) CreateNewUser(user *models.User) (*models.User, error) {
-	return s.repo.CreateNewUser(user)
+func GetUserNames(repo repository.UserRepository) (*[]models.User, error) {
+	return repo.FindAllNames()
 }

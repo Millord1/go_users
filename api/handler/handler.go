@@ -2,15 +2,22 @@ package handler
 
 import (
 	"microservices/models"
+	"microservices/repository"
 	"microservices/services"
+	"microservices/utils"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
+var repo repository.UserRepository
+
+func init() {
+	repo = repository.DbConnect(utils.GetEnvFile().Name)
+}
+
 func GetUsersNames(c *gin.Context) {
-	us := services.NewUserService()
-	allUserNames, err := us.GetUserNames()
+	allUserNames, err := services.GetUserNames(repo)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"code": "Internal error", "message": "Internal error"})
 	}
@@ -24,9 +31,7 @@ func NewUser(c *gin.Context) {
 		Password: c.PostForm("password"),
 	}
 
-	us := services.NewUserService()
-
-	dbUser, err := us.CreateNewUser(&user)
+	dbUser, err := services.CreateNewUser(repo, &user)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"code": "Internal error", "message": "Internal error"})
 	}
@@ -38,8 +43,7 @@ func UserLogin(c *gin.Context) {
 	email := c.PostForm("email")
 	pw := c.PostForm("password")
 
-	us := services.NewUserService()
-	jwt, err := us.LoginUser(email, pw)
+	jwt, err := services.LoginUser(repo, email, pw)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"code": "Bad request", "message": "Login failed"})
 	}
