@@ -36,7 +36,7 @@ func CreateToken(user *models.User) (string, error) {
 			"exp":      time.Now().Add(time.Hour * 4).Unix(),
 		})
 
-	tokenString, err := token.SignedString(secretKey)
+	tokenString, err := token.SignedString([]byte(secretKey))
 	if err != nil {
 		return "", err
 	}
@@ -46,7 +46,7 @@ func CreateToken(user *models.User) (string, error) {
 
 func VerifyToken(tokenString string) error {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		return secretKey, nil
+		return []byte(secretKey), nil
 	})
 
 	if err != nil {

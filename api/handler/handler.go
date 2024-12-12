@@ -12,6 +12,11 @@ import (
 
 var repo repository.UserRepository
 
+type LoginForm struct {
+	Email    string `form:"email" validate:"required,email"`
+	Password string `form:"password" validate:"required,min=5"`
+}
+
 func init() {
 	repo = repository.DbConnect(utils.GetEnvFile().Name)
 }
@@ -40,13 +45,31 @@ func NewUser(c *gin.Context) {
 }
 
 func UserLogin(c *gin.Context) {
-	email := c.PostForm("email")
-	pw := c.PostForm("password")
 
-	jwt, err := services.LoginUser(repo, email, pw)
+	var login LoginForm
+	err := c.ShouldBind(&login)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"code": "Bad request", "message": "Login failed"})
+		c.JSON(http.StatusBadRequest, gin.H{"code": "fail"})
+		return
+	}
+
+	jwt, err := services.LoginUser(repo, login.Email, login.Password)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": err})
 	}
 
 	c.JSON(http.StatusAccepted, jwt)
+
+	/*
+		 	jwt, err := services.LoginUser(repo, email, pw)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"code": "Bad request", "message": "Login failed"})
+			}
+
+			c.JSON(http.StatusAccepted, jwt)
+	*/
+}
+
+func Test(c *gin.Context) {
+	c.JSON(http.StatusAccepted, "Hello, auth world")
 }
