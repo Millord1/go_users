@@ -17,6 +17,8 @@ func main() {
 	r.POST("/login", handler.UserLogin)
 
 	authGroup.GET("/test", handler.Test)
+	authGroup.GET("/two_auth/activate", handler.Activate2Fa)
+	authGroup.GET("two_auth/login", handler.EnterOTP)
 
 	r.Run()
 

@@ -1,6 +1,9 @@
 package handler
 
 import (
+	"fmt"
+	"log"
+	"microservices/encryption"
 	"microservices/models"
 	"microservices/repository"
 	"microservices/services"
@@ -12,7 +15,7 @@ import (
 
 var repo repository.UserRepository
 
-type LoginForm struct {
+type loginForm struct {
 	Email    string `form:"email" validate:"required,email"`
 	Password string `form:"password" validate:"required,min=5"`
 }
@@ -46,7 +49,7 @@ func NewUser(c *gin.Context) {
 
 func UserLogin(c *gin.Context) {
 
-	var login LoginForm
+	var login loginForm
 	err := c.ShouldBind(&login)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"code": "fail"})
@@ -57,19 +60,35 @@ func UserLogin(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"code": err})
 	}
+	fmt.Println(jwt)
 
 	c.JSON(http.StatusAccepted, jwt)
+}
 
-	/*
-		 	jwt, err := services.LoginUser(repo, email, pw)
-			if err != nil {
-				c.JSON(http.StatusBadRequest, gin.H{"code": "Bad request", "message": "Login failed"})
-			}
+func Activate2Fa(c *gin.Context) {
 
-			c.JSON(http.StatusAccepted, jwt)
-	*/
+	tokenString := c.GetHeader("Authorization")
+	user, err := services.GetUserFromJWT(repo, tokenString)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": "Bad request"})
+	}
+
+	services.EnableTwoFactorAuth(repo, user)
+}
+
+func EnterOTP(c *gin.Context) {
+	tokenString := c.GetHeader("Authorization")
+	user, err := services.GetUserFromJWT(repo, tokenString)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": "Bad request"})
+	}
+	utils.VerifyOTP(user.Totp)
 }
 
 func Test(c *gin.Context) {
-	c.JSON(http.StatusAccepted, "Hello, auth world")
+	data := "testTruc"
+	enc, _ := encryption.EncryptData(data)
+	fmt.Println(enc)
+	log.Fatalln(encryption.DecryptData(enc))
+	/* c.JSON(http.StatusAccepted) */
 }

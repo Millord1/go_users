@@ -115,6 +115,7 @@ func (repo MySQLRepository) FindByMail(email string) (*models.User, error) {
 	if err != nil {
 		log.Fatalln(err)
 	}
+
 	return &user, err
 }
 

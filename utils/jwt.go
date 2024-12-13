@@ -44,18 +44,39 @@ func CreateToken(user *models.User) (string, error) {
 	return tokenString, nil
 }
 
-func VerifyToken(tokenString string) error {
+func VerifyToken(tokenString string) (*jwt.Token, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		return []byte(secretKey), nil
 	})
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if !token.Valid {
-		return http.ErrAbortHandler
+		return nil, http.ErrAbortHandler
 	}
 
-	return nil
+	return token, nil
+}
+
+func GetUserData(tokenString string) (*models.User, error) {
+	_, err := VerifyToken(tokenString)
+	if err != nil {
+		return nil, err
+	}
+
+	claims := jwt.MapClaims{}
+	_, claimsErr := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+		return []byte(secretKey), nil
+	})
+
+	if claimsErr != nil {
+		return nil, err
+	}
+
+	return &models.User{
+		Username: claims["username"].(string),
+		Email:    claims["email"].(string),
+	}, nil
 }

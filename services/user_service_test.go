@@ -2,6 +2,7 @@ package services
 
 import (
 	"microservices/models"
+	"microservices/utils"
 	"reflect"
 	"testing"
 
@@ -64,19 +65,6 @@ func TestLoginUser(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "string", reflect.TypeOf(jwt))
 
-	// TODO check jwt login
+	_, jwtErr := utils.VerifyToken(jwt)
+	assert.NoError(t, jwtErr)
 }
-
-/* func TestUpdatePassword(t *testing.T) {
-	repo := MockMySQLRepo{}
-	var user models.User
-	gofakeit.Struct(&user)
-	pw := user.Password
-
-	hashedUser, err := user.HashPassword()
-	assert.NoError(t, err)
-	assert.NotEqual(t, user.Password, hashedUser.Password)
-
-
-}
-*/
