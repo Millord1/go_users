@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"microservices/encryption"
 	"microservices/models"
 	"microservices/repository"
 	"microservices/utils"
@@ -53,7 +54,7 @@ func GetUserFromJWT(repo repository.UserRepository, tokenString string) (*models
 	return user, nil
 }
 
-func LoginUser(repo repository.UserRepository, email string, pw string) (string, error) {
+func LoginUser(repo repository.UserRepository, email string, pw string, otp string) (string, error) {
 	user, err := repo.FindByMail(email)
 	if err != nil {
 		return "", err
@@ -61,6 +62,15 @@ func LoginUser(repo repository.UserRepository, email string, pw string) (string,
 
 	if !user.VerifyPassword(pw) {
 		return "", errors.New("password doesn't match for user " + user.Username)
+	}
+
+	userTotp, err := encryption.DecryptData(user.Totp)
+	if err != nil {
+		return "", err
+	}
+
+	if !utils.VerifyOtp(string(userTotp), otp) {
+		return "", errors.New("2FA Auth failed")
 	}
 
 	return utils.CreateToken(user)

@@ -37,7 +37,13 @@ func GenerateTOTPWithSecret(user *models.User, randSecret string) {
 	fmt.Println("\n scan it")
 }
 
-func VerifyOTP(randSecret string) {
+func VerifyOtp(randSecret string, otp string) bool {
+	totp := gotp.NewDefaultTOTP(randSecret)
+	return totp.Verify(otp, time.Now().Unix())
+}
+
+func DevVerifyOTP(randSecret string) {
+	// Usefull to debug from terminal
 	totp := gotp.NewDefaultTOTP(randSecret)
 
 	fmt.Printf("Please enter your OTP from your app: ")

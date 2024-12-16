@@ -1,14 +1,13 @@
 package models
 
 import (
-	"microservices/encryption"
-
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
 type User struct {
 	gorm.Model
+	ID       uint   `gorm:"primaryKey"`
 	Username string `gorm:"type:varchar(45);uniqueIndex:username_unique;not null;<-" json:"username" fake:"{username}"`
 	Email    string `gorm:"type:varchar(60);uniqueIndex:email_unique;not null;<-" json:"-" fake:"email"`
 	Password string `gorm:"type:varchar(65);not null;<-" json:"-" fake:"password"`
@@ -22,9 +21,13 @@ func (user *User) HashPassword() (*User, error) {
 }
 
 func (user *User) HashTotp() (*User, error) {
-	enc, err := encryption.EncryptData(user.Totp)
-	user.Totp = enc
+	bytes, err := bcrypt.GenerateFromPassword([]byte(user.Totp), 14)
+	user.Totp = string(bytes)
 	return user, err
+}
+
+func (user *User) VerifyTotp() bool {
+	return true
 }
 
 func (user User) VerifyPassword(pw string) bool {

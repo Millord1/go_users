@@ -2,8 +2,6 @@ package handler
 
 import (
 	"fmt"
-	"log"
-	"microservices/encryption"
 	"microservices/models"
 	"microservices/repository"
 	"microservices/services"
@@ -18,6 +16,7 @@ var repo repository.UserRepository
 type loginForm struct {
 	Email    string `form:"email" validate:"required,email"`
 	Password string `form:"password" validate:"required,min=5"`
+	Otp      string `form:"otp" validate:"required,numeric"`
 }
 
 func init() {
@@ -44,7 +43,9 @@ func NewUser(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"code": "Internal error", "message": "Internal error"})
 	}
 
-	c.JSON(http.StatusCreated, dbUser.Username)
+	// Terminal output
+	services.EnableTwoFactorAuth(repo, dbUser)
+	/* c.JSON(http.StatusCreated, dbUser.Username) */
 }
 
 func UserLogin(c *gin.Context) {
@@ -56,7 +57,7 @@ func UserLogin(c *gin.Context) {
 		return
 	}
 
-	jwt, err := services.LoginUser(repo, login.Email, login.Password)
+	jwt, err := services.LoginUser(repo, login.Email, login.Password, login.Otp)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"code": err})
 	}
@@ -76,19 +77,19 @@ func Activate2Fa(c *gin.Context) {
 	services.EnableTwoFactorAuth(repo, user)
 }
 
-func EnterOTP(c *gin.Context) {
+/* func EnterOTP(c *gin.Context) {
 	tokenString := c.GetHeader("Authorization")
 	user, err := services.GetUserFromJWT(repo, tokenString)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"code": "Bad request"})
 	}
-	utils.VerifyOTP(user.Totp)
-}
+	utils.VerifyOtp(user.Totp)
+} */
 
 func Test(c *gin.Context) {
-	data := "testTruc"
-	enc, _ := encryption.EncryptData(data)
-	fmt.Println(enc)
-	log.Fatalln(encryption.DecryptData(enc))
+	/* 	data := "testTruc" */
+	/* 	enc, _ := encryption.EncryptData(data)
+	   	fmt.Println(enc)
+	   	log.Fatalln(encryption.DecryptData(enc)) */
 	/* c.JSON(http.StatusAccepted) */
 }
