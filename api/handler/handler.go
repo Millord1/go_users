@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"fmt"
 	"microservices/models"
 	"microservices/repository"
@@ -12,6 +13,7 @@ import (
 )
 
 var repo repository.UserRepository
+var logger *utils.Logger
 
 type loginForm struct {
 	Email    string `form:"email" validate:"required,email"`
@@ -22,14 +24,17 @@ type loginForm struct {
 
 func init() {
 	repo = repository.DbConnect(utils.GetEnvFile().Name)
+	logger = utils.GetLogger("handler.txt")
 }
 
 func GetUsersNames(c *gin.Context) {
-	allUserNames, err := services.GetUserNames(repo)
+	/* allUserNames, err := services.GetUserNames(repo) */
+	err := errors.New("Test")
 	if err != nil {
+		logger.Error.Println(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"code": "Internal error", "message": "Internal error"})
 	}
-	c.JSON(http.StatusOK, allUserNames)
+	c.JSON(http.StatusOK, "allUserNames")
 }
 
 func NewUser(c *gin.Context) {
@@ -41,6 +46,7 @@ func NewUser(c *gin.Context) {
 
 	err := services.CreateNewUser(repo, &user)
 	if err != nil {
+		logger.Error.Println(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"code": "Internal error", "message": "Internal error"})
 	}
 
@@ -54,12 +60,14 @@ func UserLogin(c *gin.Context) {
 	var login loginForm
 	err := c.ShouldBind(&login)
 	if err != nil {
+		logger.Error.Println(err)
 		c.JSON(http.StatusBadRequest, gin.H{"code": "fail"})
 		return
 	}
 
 	jwt, err := services.LoginUser(repo, login.Email, login.Password, login.Otp)
 	if err != nil {
+		logger.Error.Println(err)
 		c.JSON(http.StatusBadRequest, gin.H{"code": err})
 	}
 	fmt.Println(jwt)
@@ -72,6 +80,7 @@ func Activate2Fa(c *gin.Context) {
 	tokenString := c.GetHeader("Authorization")
 	user, err := services.GetUserFromJWT(repo, tokenString)
 	if err != nil {
+		logger.Error.Println(err)
 		c.JSON(http.StatusBadRequest, gin.H{"code": "Bad request"})
 	}
 
