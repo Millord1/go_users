@@ -17,7 +17,7 @@ func GenerateTOTPWithSecret(user *models.User, randSecret string) {
 	totp := gotp.NewDefaultTOTP(randSecret)
 
 	user.Totp = randSecret
-	_, err := user.HashTotp()
+	err := user.HashTotp()
 	if err != nil {
 		log.Fatalln(err)
 	}

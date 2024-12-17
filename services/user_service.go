@@ -10,18 +10,22 @@ import (
 	"github.com/xlzd/gotp"
 )
 
-func CreateNewUser(repo repository.UserRepository, user *models.User) (*models.User, error) {
+func CreateNewUser(repo repository.UserRepository, user *models.User) error {
 
-	userToPush, hashErr := user.CheckPasswordIsHashed()
+	hashErr := user.CheckPasswordIsHashed()
 	if hashErr != nil {
-		return user, hashErr
+		return hashErr
 	}
-	return repo.Save(*userToPush)
+	err := repo.Save(*user)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
-func UpdateUser(repo repository.UserRepository, user *models.User, pw string) (*models.User, error) {
+func UpdateUser(repo repository.UserRepository, user *models.User, pw string) error {
 	if !user.VerifyPassword(pw) {
-		return user, errors.New("Unauthorized")
+		return errors.New("Unauthorized")
 	}
 
 	toUpdate := models.User{
@@ -76,16 +80,16 @@ func LoginUser(repo repository.UserRepository, email string, pw string, otp stri
 	return utils.CreateToken(user)
 }
 
-func EnableTwoFactorAuth(repo repository.UserRepository, user *models.User) (*models.User, error) {
+func EnableTwoFactorAuth(repo repository.UserRepository, user *models.User) error {
 	randSecret := gotp.RandomSecret(16)
 	utils.GenerateTOTPWithSecret(user, randSecret)
 
 	// Update user with encrypted TOTP
-	_, err := repo.Update(user)
+	err := repo.Update(user)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return user, nil
+	return nil
 }
 
 func GetUserNames(repo repository.UserRepository) (*[]models.User, error) {

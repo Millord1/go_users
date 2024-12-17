@@ -16,7 +16,8 @@ var repo repository.UserRepository
 type loginForm struct {
 	Email    string `form:"email" validate:"required,email"`
 	Password string `form:"password" validate:"required,min=5"`
-	Otp      string `form:"otp" validate:"required,numeric"`
+	Otp      string `form:"otp"`
+	/* Otp      string `form:"otp" validate:"required,numeric"` */
 }
 
 func init() {
@@ -38,13 +39,13 @@ func NewUser(c *gin.Context) {
 		Password: c.PostForm("password"),
 	}
 
-	dbUser, err := services.CreateNewUser(repo, &user)
+	err := services.CreateNewUser(repo, &user)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"code": "Internal error", "message": "Internal error"})
 	}
 
 	// Terminal output
-	services.EnableTwoFactorAuth(repo, dbUser)
+	services.EnableTwoFactorAuth(repo, &user)
 	/* c.JSON(http.StatusCreated, dbUser.Username) */
 }
 

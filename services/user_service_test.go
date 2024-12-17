@@ -16,8 +16,8 @@ func checkisHashed(pw string) bool {
 	return pw[0:4] == "$2a$" && len(pw) > 50
 }
 
-func (mock MockMySQLRepo) Update(user *models.User) (*models.User, error) {
-	return user, nil
+func (mock MockMySQLRepo) Update(user *models.User) error {
+	return nil
 }
 
 func (mock MockMySQLRepo) FindAllNames() (*[]models.User, error) {
@@ -37,8 +37,8 @@ func (mock MockMySQLRepo) FindByMail(email string) (*models.User, error) {
 	}, nil
 }
 
-func (mock MockMySQLRepo) Save(user models.User) (*models.User, error) {
-	return &user, nil
+func (mock MockMySQLRepo) Save(user models.User) error {
+	return nil
 }
 
 func TestCreateNewUser(t *testing.T) {
@@ -46,10 +46,10 @@ func TestCreateNewUser(t *testing.T) {
 	var user models.User
 	gofakeit.Struct(&user)
 
-	newUser, err := CreateNewUser(repo, &user)
+	err := CreateNewUser(repo, &user)
 	assert.NoError(t, err)
-	assert.True(t, checkisHashed(newUser.Password))
-	assert.NotEqual(t, user.Password, newUser.Password)
+	assert.True(t, checkisHashed(user.Password))
+	assert.NotEqual(t, user.Password, user.Password)
 }
 
 func TestLoginUser(t *testing.T) {

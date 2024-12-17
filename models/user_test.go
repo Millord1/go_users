@@ -20,16 +20,16 @@ func TestPwHashed(t *testing.T) {
 		Password: pw,
 	}
 
-	hashedPwUser, hashErr := mockUser.HashPassword()
+	hashErr := mockUser.HashPassword()
 	if assert.NoError(t, hashErr) {
-		assert.True(t, checkisHashed(hashedPwUser.Password))
+		assert.True(t, checkisHashed(mockUser.Password))
 	}
 
-	user, err := mockUser.CheckPasswordIsHashed()
+	err := mockUser.CheckPasswordIsHashed()
 	if assert.NoError(t, err) {
-		assert.True(t, checkisHashed(user.Password))
+		assert.True(t, checkisHashed(mockUser.Password))
 	}
 
-	assert.NotEqual(t, pw, user.Password)
-	assert.True(t, user.VerifyPassword(pw))
+	assert.NotEqual(t, pw, mockUser.Password)
+	assert.True(t, mockUser.VerifyPassword(pw))
 }

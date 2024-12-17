@@ -14,16 +14,22 @@ type User struct {
 	Totp     string `gorm:"type:varchar(60);<-" json:"-"`
 }
 
-func (user *User) HashPassword() (*User, error) {
+func (user *User) HashPassword() error {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(user.Password), 14)
+	if err != nil {
+		return err
+	}
 	user.Password = string(bytes)
-	return user, err
+	return nil
 }
 
-func (user *User) HashTotp() (*User, error) {
+func (user *User) HashTotp() error {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(user.Totp), 14)
+	if err != nil {
+		return err
+	}
 	user.Totp = string(bytes)
-	return user, err
+	return nil
 }
 
 func (user *User) VerifyTotp() bool {
@@ -35,10 +41,12 @@ func (user User) VerifyPassword(pw string) bool {
 	return err == nil
 }
 
-func (user *User) CheckPasswordIsHashed() (*User, error) {
+func (user *User) CheckPasswordIsHashed() error {
 	// Check password length and first chars
 	if !(user.Password[0:4] == "$2a$" && len(user.Password) > 50) {
-		return user.HashPassword()
+		if err := user.HashPassword(); err != nil {
+			return err
+		}
 	}
-	return user, nil
+	return nil
 }

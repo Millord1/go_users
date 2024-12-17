@@ -22,8 +22,8 @@ type MySQLRepository struct {
 }
 
 type UserRepository interface {
-	Save(user models.User) (*models.User, error)
-	Update(user *models.User) (*models.User, error)
+	Save(user models.User) error
+	Update(user *models.User) error
 	FindAllNames() (*[]models.User, error)
 	FindByMail(email string) (*models.User, error)
 }
@@ -56,12 +56,12 @@ func migrate(repo MySQLRepository) {
 	user := models.User{
 		Username: "admin", Email: "admin@test.com", Password: os.Getenv("ADMIN_PW"),
 	}
-	userToPush, hashErr := user.HashPassword()
+	hashErr := user.HashPassword()
 	if hashErr != nil {
 		log.Fatalln(hashErr)
 	}
 
-	_, err := repo.Save(*userToPush)
+	err := repo.Save(user)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -92,12 +92,12 @@ func DbConnect(envFile string) *MySQLRepository {
 	return &repo
 }
 
-func (repo MySQLRepository) Update(user *models.User) (*models.User, error) {
+func (repo MySQLRepository) Update(user *models.User) error {
 	err := repo.db.Model(&user).Updates(user).Error
 	if err != nil {
-		log.Fatalln(err)
+		return err
 	}
-	return user, err
+	return nil
 }
 
 func (repo MySQLRepository) FindAllNames() (*[]models.User, error) {
@@ -119,10 +119,10 @@ func (repo MySQLRepository) FindByMail(email string) (*models.User, error) {
 	return &user, err
 }
 
-func (repo MySQLRepository) Save(user models.User) (*models.User, error) {
+func (repo MySQLRepository) Save(user models.User) error {
 	err := repo.db.Create(&user).Error
 	if err != nil {
-		log.Fatalln(err)
+		return err
 	}
-	return &user, err
+	return nil
 }
