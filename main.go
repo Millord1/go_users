@@ -5,27 +5,23 @@ import (
 	"microservices/api/handler"
 	"microservices/api/middlewares"
 	"microservices/api/server"
-	"microservices/utils"
 	"net"
 	"net/http"
 	"net/rpc"
+	"sync"
 
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
 
-	logger := utils.GetLogger("main.txt")
-	logger.Info.Println("Hello world")
+	var wg sync.WaitGroup
+	wg.Add(2)
 
-	/* 	var wg sync.WaitGroup
-	   	wg.Add(2)
+	go RPCServe(":8000")
+	go HTTPServe(":8080")
 
-	   	go RPCServe(":8000")
-	   	go HTTPServe(":8080")
-
-	   	wg.Wait() */
-
+	wg.Wait()
 }
 
 func RPCServe(port string) {
@@ -45,6 +41,7 @@ func RPCServe(port string) {
 }
 
 func HTTPServe(port string) {
+	// Run HTTP server
 	r := gin.New()
 
 	r.GET("/hello", func(c *gin.Context) {

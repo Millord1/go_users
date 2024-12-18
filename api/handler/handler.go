@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"errors"
 	"fmt"
 	"microservices/models"
 	"microservices/repository"
@@ -13,7 +12,7 @@ import (
 )
 
 var repo repository.UserRepository
-var logger *utils.Logger
+var logger utils.Logger
 
 type loginForm struct {
 	Email    string `form:"email" validate:"required,email"`
@@ -23,18 +22,20 @@ type loginForm struct {
 }
 
 func init() {
+	// user repository
 	repo = repository.DbConnect(utils.GetEnvFile().Name)
-	logger = utils.GetLogger("handler.txt")
+	// logger
+	logger = utils.NewLogger("handler.log")
 }
 
 func GetUsersNames(c *gin.Context) {
-	/* allUserNames, err := services.GetUserNames(repo) */
-	err := errors.New("Test")
+	// return all user names
+	allUserNames, err := services.GetUserNames(repo)
 	if err != nil {
-		logger.Error.Println(err)
+		logger.Sugar.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"code": "Internal error", "message": "Internal error"})
 	}
-	c.JSON(http.StatusOK, "allUserNames")
+	c.JSON(http.StatusOK, allUserNames)
 }
 
 func NewUser(c *gin.Context) {
@@ -46,11 +47,11 @@ func NewUser(c *gin.Context) {
 
 	err := services.CreateNewUser(repo, &user)
 	if err != nil {
-		logger.Error.Println(err)
+		logger.Sugar.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"code": "Internal error", "message": "Internal error"})
 	}
 
-	// Terminal output
+	// Activate 2FA, here from terminal output
 	services.EnableTwoFactorAuth(repo, &user)
 	/* c.JSON(http.StatusCreated, dbUser.Username) */
 }
@@ -60,14 +61,15 @@ func UserLogin(c *gin.Context) {
 	var login loginForm
 	err := c.ShouldBind(&login)
 	if err != nil {
-		logger.Error.Println(err)
+		logger.Sugar.Error(err)
 		c.JSON(http.StatusBadRequest, gin.H{"code": "fail"})
 		return
 	}
 
+	// Log user with OTP (2FA)
 	jwt, err := services.LoginUser(repo, login.Email, login.Password, login.Otp)
 	if err != nil {
-		logger.Error.Println(err)
+		logger.Sugar.Error(err)
 		c.JSON(http.StatusBadRequest, gin.H{"code": err})
 	}
 	fmt.Println(jwt)
@@ -76,11 +78,12 @@ func UserLogin(c *gin.Context) {
 }
 
 func Activate2Fa(c *gin.Context) {
+	// Old way, activate 2FA after user is created without TOTP
 
 	tokenString := c.GetHeader("Authorization")
 	user, err := services.GetUserFromJWT(repo, tokenString)
 	if err != nil {
-		logger.Error.Println(err)
+		logger.Sugar.Error(err)
 		c.JSON(http.StatusBadRequest, gin.H{"code": "Bad request"})
 	}
 

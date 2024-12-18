@@ -10,7 +10,7 @@ import (
 func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		tokenString := c.GetHeader("Authorization")
-		// Parse and check validity
+		// Parse and check JWT's validity
 		if _, err := utils.VerifyToken(tokenString); err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 			c.Abort()

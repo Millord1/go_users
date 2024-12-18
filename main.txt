@@ -1,2 +1,0 @@
-INFO: 2024/12/17 11:49:06 main.go:19: Hello world
-INFO: 2024/12/17 11:49:29 main.go:19: Hello world

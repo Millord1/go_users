@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"log"
 	"microservices/models"
 	"net/http"
 	"os"
@@ -19,16 +18,17 @@ type JWTChecker interface {
 }
 
 func getPassPhrase() string {
+	// Used to encode JWT
 	envFile := GetEnvFile().Name
-	err := godotenv.Load(envFile)
-	if err != nil {
-		log.Fatalf("Error loading %s file", envFile)
+	if err := godotenv.Load(envFile); err != nil {
+		logger.Sugar.Fatal("Error loading " + envFile + " file")
 	}
 
 	return os.Getenv("PASSPHRASE")
 }
 
 func CreateToken(user *models.User) (string, error) {
+	// Create a new JWT to return to user for auth
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256,
 		jwt.MapClaims{
 			"username": user.Username,
@@ -38,6 +38,7 @@ func CreateToken(user *models.User) (string, error) {
 
 	tokenString, err := token.SignedString([]byte(secretKey))
 	if err != nil {
+		logger.Sugar.Fatal(err)
 		return "", err
 	}
 
@@ -45,15 +46,18 @@ func CreateToken(user *models.User) (string, error) {
 }
 
 func VerifyToken(tokenString string) (*jwt.Token, error) {
+	// Verify JWT validity
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		return []byte(secretKey), nil
 	})
 
 	if err != nil {
+		logger.Sugar.Fatal(err)
 		return nil, err
 	}
 
 	if !token.Valid {
+		logger.Sugar.Fatal("Invalid token", "token", tokenString)
 		return nil, http.ErrAbortHandler
 	}
 
@@ -61,8 +65,10 @@ func VerifyToken(tokenString string) (*jwt.Token, error) {
 }
 
 func GetUserData(tokenString string) (*models.User, error) {
+	// Get user from JWT
 	_, err := VerifyToken(tokenString)
 	if err != nil {
+		logger.Sugar.Error(err)
 		return nil, err
 	}
 
@@ -72,6 +78,7 @@ func GetUserData(tokenString string) (*models.User, error) {
 	})
 
 	if claimsErr != nil {
+		logger.Sugar.Error(err)
 		return nil, err
 	}
 
