@@ -10,7 +10,7 @@ import (
 	"gorm.io/gorm"
 )
 
-var logger utils.Logger
+var logger utils.Logger = utils.NewLogger("user_repo.log")
 
 type MySQLRepository struct {
 	User     string
@@ -46,9 +46,16 @@ func init() {
 	if !repo.db.Migrator().HasTable("users") {
 		// if table 'users' doesn't exist
 		migrate(*repo)
+	} else {
+		// if exists, create default user if table is empty
+		var count int64
+		repo.db.Table("users").Count(&count)
+		if count == 0 {
+			if err := createDefaultUser(*repo); err != nil {
+				logger.Sugar.Fatal(err)
+			}
+		}
 	}
-
-	logger = utils.NewLogger("user_repo.log")
 }
 
 func migrate(repo MySQLRepository) {
@@ -57,19 +64,26 @@ func migrate(repo MySQLRepository) {
 		logger.Sugar.Fatal(migrErr)
 	}
 
+	if err := createDefaultUser(repo); err != nil {
+		logger.Sugar.Fatal(err)
+	}
+}
+
+func createDefaultUser(repo MySQLRepository) error {
 	// Create a default user with pw from .env
 	user := models.User{
 		Username: "admin", Email: "admin@test.com", Password: os.Getenv("ADMIN_PW"),
 	}
 	hashErr := user.HashPassword()
 	if hashErr != nil {
-		logger.Sugar.Fatal(hashErr)
+		return hashErr
 	}
 
 	err := repo.Save(user)
 	if err != nil {
-		logger.Sugar.Fatal(err)
+		return err
 	}
+	return nil
 }
 
 func DbConnect(envFile string) *MySQLRepository {

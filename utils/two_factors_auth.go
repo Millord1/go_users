@@ -12,11 +12,7 @@ import (
 	"github.com/xlzd/gotp"
 )
 
-var logger Logger
-
-func init() {
-	logger = NewLogger("auth.log")
-}
+var logger Logger = NewLogger("auth.log")
 
 func GenerateTOTPWithSecret(user *models.User, randSecret string) {
 	totp := gotp.NewDefaultTOTP(randSecret)

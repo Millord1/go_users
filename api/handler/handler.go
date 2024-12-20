@@ -11,21 +11,14 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var repo repository.UserRepository
-var logger utils.Logger
+var repo repository.UserRepository = repository.DbConnect(utils.GetEnvFile().Name)
+var logger utils.Logger = utils.NewLogger("handler.log")
 
 type loginForm struct {
 	Email    string `form:"email" validate:"required,email"`
 	Password string `form:"password" validate:"required,min=5"`
 	Otp      string `form:"otp"`
 	/* Otp      string `form:"otp" validate:"required,numeric"` */
-}
-
-func init() {
-	// user repository
-	repo = repository.DbConnect(utils.GetEnvFile().Name)
-	// logger
-	logger = utils.NewLogger("handler.log")
 }
 
 func GetUsersNames(c *gin.Context) {
